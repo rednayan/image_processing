@@ -40,16 +40,16 @@ impl Image {
                 is_exif = true;
             }
         }
-        let vec_slice: &[u8] = &self.image_bytes[offset..application_data_size + offset];
-        if vec_slice[0] == 0x4a
-            && vec_slice[1] == 0x46
-            && vec_slice[2] == 0x49
-            && vec_slice[3] == 0x46
+        let application_data: &[u8] = &self.image_bytes[offset..application_data_size + offset];
+        if application_data[0] == 0x4a
+            && application_data[1] == 0x46
+            && application_data[2] == 0x49
+            && application_data[3] == 0x46
         {
             is_jfif = true;
         }
         let app_data = ApplicationData {
-            application_data: vec_slice,
+            application_data,
             is_exif,
             is_jfif,
         };
