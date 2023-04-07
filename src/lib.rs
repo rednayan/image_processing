@@ -1,4 +1,3 @@
-use std::fs;
 use std::result::Result;
 
 #[derive(Debug, Clone)]
@@ -19,6 +18,20 @@ impl Image {
         }
         return 0;
     }
+
+    pub fn application_data(&self) -> &[u8] {
+        let mut application_data_size: usize = 0;
+        let mut offset = 0;
+        for (i, v) in self.image_bytes.iter().enumerate() {
+            if v == &0xff && self.image_bytes[i + 1] == 0xe0 {
+                offset = i + 4;
+                application_data_size =
+                    self.image_bytes[i + 2] as usize + self.image_bytes[i + 3] as usize - 2;
+            }
+        }
+        let vec_slice: &[u8] = &self.image_bytes[offset..application_data_size + offset];
+        vec_slice
+    }
 }
 
 pub trait Jpeg {
@@ -32,18 +45,4 @@ impl Jpeg for Image {
         }
         return Err("Not a valid JPEG file".to_string());
     }
-}
-
-pub fn image() -> Result<(), String> {
-    let image_bytes = match fs::read("example.jpg") {
-        Ok(val) => val,
-        Err(_e) => return Err(String::from("ERROR:error reading file")),
-    };
-
-    let image = Image::new(image_bytes.clone());
-
-    let end_of_image = image.end_of_image();
-    println!("{}", end_of_image);
-
-    Ok(())
 }
