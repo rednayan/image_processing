@@ -1,5 +1,5 @@
 use image_processing::image;
 
 fn main() {
-    image();
+    image().expect("error image processing");
 }
