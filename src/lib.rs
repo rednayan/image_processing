@@ -22,14 +22,25 @@ impl Image {
     pub fn application_data(&self) -> &[u8] {
         let mut application_data_size: usize = 0;
         let mut offset = 0;
+        let mut is_exif = false;
+        let mut is_jfif = false;
         for (i, v) in self.image_bytes.iter().enumerate() {
             if v == &0xff && self.image_bytes[i + 1] == 0xe0 {
                 offset = i + 4;
                 application_data_size =
                     self.image_bytes[i + 2] as usize + self.image_bytes[i + 3] as usize - 2;
+            } else if v == &0xff && self.image_bytes[i + 1] == 0xe1 {
+                is_exif = true;
             }
         }
         let vec_slice: &[u8] = &self.image_bytes[offset..application_data_size + offset];
+        if vec_slice[0] == 0x4a
+            && vec_slice[1] == 0x46
+            && vec_slice[2] == 0x49
+            && vec_slice[3] == 0x46
+        {
+            is_jfif = true;
+        }
         vec_slice
     }
 }
