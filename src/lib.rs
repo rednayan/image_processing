@@ -1,6 +1,13 @@
 use std::result::Result;
 
 #[derive(Debug, Clone)]
+pub struct ApplicationData<'a> {
+    pub application_data: &'a [u8],
+    pub is_exif: bool,
+    pub is_jfif: bool,
+}
+
+#[derive(Debug, Clone)]
 pub struct Image {
     pub image_bytes: Vec<u8>,
 }
@@ -19,7 +26,7 @@ impl Image {
         return 0;
     }
 
-    pub fn application_data(&self) -> &[u8] {
+    pub fn application_data(&self) -> ApplicationData {
         let mut application_data_size: usize = 0;
         let mut offset = 0;
         let mut is_exif = false;
@@ -41,7 +48,12 @@ impl Image {
         {
             is_jfif = true;
         }
-        vec_slice
+        let app_data = ApplicationData {
+            application_data: vec_slice,
+            is_exif,
+            is_jfif,
+        };
+        app_data
     }
 }
 
