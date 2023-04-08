@@ -10,7 +10,6 @@ pub struct ApplicationData<'a> {
     pub density_field: u8,
     pub horizontal_px_density: Vec<u8>,
     pub vertical_px_density: Vec<u8>,
-    pub thumbnail_image: u8,
     pub thumbnail_image_width: u8,
     pub thumbnail_image_height: u8,
 }
@@ -41,51 +40,70 @@ impl Image {
         let mut is_jfif = false;
         for (i, v) in self.image_bytes.iter().enumerate() {
             if v == &0xff && self.image_bytes[i + 1] == 0xe0 {
+                is_jfif = true;
                 offset = i + 4;
                 application_data_size =
                     self.image_bytes[i + 2] as usize + self.image_bytes[i + 3] as usize - 2;
+                break;
             } else if v == &0xff && self.image_bytes[i + 1] == 0xe1 {
                 is_exif = true;
+                offset = i + 4;
+                application_data_size =
+                    self.image_bytes[i + 2] as usize + self.image_bytes[i + 3] as usize - 2;
+                break;
             }
         }
         let application_data: &[u8] = &self.image_bytes[offset..application_data_size + offset];
-        if application_data[0] == 0x4a
-            && application_data[1] == 0x46
-            && application_data[2] == 0x49
-            && application_data[3] == 0x46
-        {
-            is_jfif = true;
+
+        if is_jfif == true {
+            let format_name: Vec<u8> = vec![
+                application_data[0],
+                application_data[1],
+                application_data[2],
+                application_data[3],
+            ];
+            let format_version: Vec<u8> = vec![application_data[4], application_data[5]];
+            let density_field: u8 = application_data[6];
+            let horizontal_px_density: Vec<u8> = vec![application_data[7], application_data[8]];
+            let vertical_px_density: Vec<u8> = vec![application_data[9], application_data[10]];
+            let thumbnail_image_width: u8 = application_data[11];
+            let thumbnail_image_height: u8 = application_data[12];
+            let app_data = ApplicationData {
+                application_data,
+                is_exif,
+                is_jfif,
+                format_name,
+                format_version,
+                density_field,
+                horizontal_px_density,
+                vertical_px_density,
+                thumbnail_image_height,
+                thumbnail_image_width,
+            };
+            extract_thumbnail_image(
+                app_data.thumbnail_image_width.clone(),
+                app_data.thumbnail_image_height.clone(),
+            );
+            return app_data;
+        } else {
+            return ApplicationData {
+                application_data,
+                is_exif,
+                is_jfif: false,
+                format_name: vec![0],
+                format_version: vec![0],
+                density_field: 0,
+                horizontal_px_density: vec![0],
+                vertical_px_density: vec![0],
+                thumbnail_image_width: 0,
+                thumbnail_image_height: 0,
+            };
         }
-
-        let format_name: Vec<u8> = vec![
-            application_data[0],
-            application_data[1],
-            application_data[2],
-            application_data[3],
-        ];
-        let format_version: Vec<u8> = vec![application_data[4], application_data[5]];
-        let density_field: u8 = application_data[6];
-        let horizontal_px_density: Vec<u8> = vec![application_data[7], application_data[8]];
-        let vertical_px_density: Vec<u8> = vec![application_data[9], application_data[10]];
-        let thumbnail_image: u8 = application_data[11];
-        let thumbnail_image_width: u8 = application_data[12];
-        let thumbnail_image_height: u8 = application_data[13];
-        let app_data = ApplicationData {
-            application_data,
-            is_exif,
-            is_jfif,
-            format_name,
-            format_version,
-            density_field,
-            horizontal_px_density,
-            vertical_px_density,
-            thumbnail_image,
-            thumbnail_image_height,
-            thumbnail_image_width,
-        };
-
-        app_data
     }
+}
+
+pub fn extract_thumbnail_image(width: u8, height: u8) {
+    let thumbnail_size_bytes = width * height * 3;
 }
 
 pub trait Jpeg {
