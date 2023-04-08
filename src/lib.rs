@@ -5,6 +5,14 @@ pub struct ApplicationData<'a> {
     pub application_data: &'a [u8],
     pub is_exif: bool,
     pub is_jfif: bool,
+    pub format_name: Vec<u8>,
+    pub format_version: Vec<u8>,
+    pub density_field: u8,
+    pub horizontal_px_density: Vec<u8>,
+    pub vertical_px_density: Vec<u8>,
+    pub thumbnail_image: u8,
+    pub thumbnail_image_width: u8,
+    pub thumbnail_image_height: u8,
 }
 
 #[derive(Debug, Clone)]
@@ -48,11 +56,34 @@ impl Image {
         {
             is_jfif = true;
         }
+
+        let format_name: Vec<u8> = vec![
+            application_data[0],
+            application_data[1],
+            application_data[2],
+            application_data[3],
+        ];
+        let format_version: Vec<u8> = vec![application_data[4], application_data[5]];
+        let density_field: u8 = application_data[6];
+        let horizontal_px_density: Vec<u8> = vec![application_data[7], application_data[8]];
+        let vertical_px_density: Vec<u8> = vec![application_data[9], application_data[10]];
+        let thumbnail_image: u8 = application_data[11];
+        let thumbnail_image_width: u8 = application_data[12];
+        let thumbnail_image_height: u8 = application_data[13];
         let app_data = ApplicationData {
             application_data,
             is_exif,
             is_jfif,
+            format_name,
+            format_version,
+            density_field,
+            horizontal_px_density,
+            vertical_px_density,
+            thumbnail_image,
+            thumbnail_image_height,
+            thumbnail_image_width,
         };
+
         app_data
     }
 }
